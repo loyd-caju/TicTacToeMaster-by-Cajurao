@@ -1,0 +1,1416 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tic-Tac-Toe | Created by CAJURAO, JHON LOYD A.</title>
+  <style>
+    :root{
+      /* Blue + Red theme */
+      --bg0:#070a14;
+      --bg1:#0a0f24;
+      --bg2:#0d1638;
+
+      --card:#0b1026cc;
+      --card2:#070b19cc;
+
+      --text:#eef2ff;
+      --muted:#b7c0ee;
+
+      --blue:#2f7bff;
+      --blue2:#76a7ff;
+
+      --red:#ff2f55;
+      --red2:#ff7a93;
+
+      --vio:#7c5cff;
+      --warn:#ffd166;
+
+      --shadow: 0 20px 55px rgba(0,0,0,.55);
+      --radius: 18px;
+
+      --grid-gap: 10px;
+      --cell: 96px;
+      --cell-sm: 76px;
+
+      --ring-blue: 0 0 0 3px rgba(47,123,255,.22), 0 0 0 10px rgba(47,123,255,.12);
+      --ring-red:  0 0 0 3px rgba(255,47,85,.20), 0 0 0 10px rgba(255,47,85,.10);
+
+      --line: rgba(255,255,255,.10);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(900px 600px at 20% 10%, rgba(47,123,255,.30), transparent 58%),
+        radial-gradient(850px 650px at 85% 20%, rgba(255,47,85,.25), transparent 58%),
+        radial-gradient(1000px 700px at 55% 85%, rgba(124,92,255,.14), transparent 60%),
+        linear-gradient(160deg, var(--bg0), var(--bg2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      position:relative;
+      overflow-x:hidden;
+    }
+
+    /* subtle “poster” texture + diagonal glow lines */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:-80px;
+      background:
+        repeating-linear-gradient(135deg,
+          rgba(255,255,255,.04) 0px,
+          rgba(255,255,255,.04) 1px,
+          transparent 1px,
+          transparent 10px),
+        radial-gradient(1200px 800px at 10% 30%, rgba(47,123,255,.10), transparent 60%),
+        radial-gradient(1200px 800px at 90% 20%, rgba(255,47,85,.09), transparent 60%);
+      pointer-events:none;
+      filter: blur(.2px);
+      opacity:.65;
+    }
+
+    .app{
+      width:min(1040px, 100%);
+      display:grid;
+      grid-template-columns: 1.18fr .82fr;
+      gap:18px;
+    }
+    @media (max-width: 930px){ .app{ grid-template-columns: 1fr; } }
+
+    .panel{
+      background: linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    /* top edge glow accent */
+    .panel::after{
+      content:"";
+      position:absolute;
+      left:0; right:0; top:0;
+      height:3px;
+      background: linear-gradient(90deg, rgba(47,123,255,.95), rgba(255,47,85,.95));
+      opacity:.8;
+    }
+
+    .header{
+      padding:16px 18px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      gap:12px;
+      position:relative;
+    }
+
+    .brand{ display:flex; flex-direction:column; gap:4px; }
+    .title{ font-size:18px; font-weight:900; letter-spacing:.2px; line-height:1.1; }
+    .subtitle{ color:var(--muted); font-size:12.5px; line-height:1.25; }
+
+    .badge{
+      padding:8px 10px;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(47,123,255,.18), rgba(255,47,85,.12));
+      border:1px solid rgba(255,255,255,.16);
+      color: #eef2ff;
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+      align-self:flex-start;
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    }
+
+    .content{ padding:16px 18px 18px; }
+
+    .topRow{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    .scoreboard{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+
+    .score{
+      border-radius: 14px;
+      padding:12px 12px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .score .label{
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      font-weight:900;
+      letter-spacing:.15px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--blue);
+      box-shadow: 0 0 0 3px rgba(47,123,255,.18);
+    }
+    .dot.o{
+      background: var(--red);
+      box-shadow: 0 0 0 3px rgba(255,47,85,.16);
+    }
+    .dot.d{
+      background: var(--warn);
+      box-shadow: 0 0 0 3px rgba(255,209,102,.18);
+    }
+    .score .value{
+      font-size:18px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .matchBar{
+      border-radius: 14px;
+      padding:12px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;
+      gap:8px;
+    }
+    .matchBarTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .matchBarTop .left{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .matchBarTop .left .h{
+      font-weight:900;
+      letter-spacing:.2px;
+      font-size:13px;
+    }
+    .matchBarTop .left .s{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .progressTrack{
+      width:100%;
+      height:12px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 999px;
+      overflow:hidden;
+      display:flex;
+      position:relative;
+    }
+    .progressTrack::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 6px, transparent 6px 12px);
+      opacity:.25;
+      pointer-events:none;
+    }
+    .progressFillX{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(47,123,255,.85), rgba(118,167,255,.55));
+      border-right:1px solid rgba(255,255,255,.10);
+      transition: width .25s ease;
+      position:relative;
+      z-index:1;
+    }
+    .progressFillO{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(255,47,85,.70), rgba(255,122,147,.45));
+      transition: width .25s ease;
+      position:relative;
+      z-index:1;
+    }
+
+    .settingsRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 520px){ .settingsRow{ grid-template-columns: 1fr; } }
+
+    .selectWrap{
+      border-radius: 14px;
+      padding:10px 12px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .selectWrap .lbl{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:900;
+      letter-spacing:.15px;
+    }
+    select{
+      width: 180px;
+      max-width: 55%;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding:8px 10px;
+      font-weight:900;
+      outline:none;
+    }
+    select:focus{ box-shadow: var(--ring-blue); }
+
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      border-radius: 14px;
+      padding:10px 12px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      justify-content:space-between;
+    }
+    .toggle .lbl{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .toggle .lbl .h{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.2px;
+      color:var(--muted);
+    }
+    .toggle .lbl .s{
+      font-size:12px;
+      color:rgba(255,255,255,.70);
+    }
+
+    .switch{
+      position:relative;
+      width:46px;
+      height:26px;
+      border-radius:999px;
+      background: rgba(0,0,0,.30);
+      border:1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      flex: 0 0 auto;
+    }
+    .switch::after{
+      content:"";
+      position:absolute;
+      top:3px; left:3px;
+      width:20px; height:20px;
+      border-radius:50%;
+      background: rgba(255,255,255,.88);
+      transition: transform .16s ease, background .16s ease;
+    }
+    .switch.on{
+      background: linear-gradient(90deg, rgba(47,123,255,.26), rgba(255,47,85,.18));
+      border-color: rgba(255,255,255,.22);
+    }
+    .switch.on::after{
+      transform: translateX(20px);
+      background: rgba(240,245,255,.97);
+    }
+
+    .boardWrap{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px 0 2px;
+    }
+
+    .board{
+      display:grid;
+      grid-template-columns: repeat(3, var(--cell));
+      gap: var(--grid-gap);
+      padding:14px;
+      border-radius: 20px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      position:relative;
+      touch-action: manipulation;
+    }
+    .board::before{
+      content:"";
+      position:absolute;
+      inset:8px;
+      border-radius: 16px;
+      background:
+        radial-gradient(280px 180px at 20% 20%, rgba(47,123,255,.12), transparent 60%),
+        radial-gradient(280px 180px at 80% 30%, rgba(255,47,85,.10), transparent 60%);
+      pointer-events:none;
+      filter: blur(.2px);
+    }
+
+    @media (max-width: 520px){
+      .board{ grid-template-columns: repeat(3, var(--cell-sm)); }
+    }
+
+    .cell{
+      width: var(--cell);
+      height: var(--cell);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.12);
+      display:grid;
+      place-items:center;
+      font-size:44px;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease, box-shadow .12s ease;
+      outline:none;
+      position:relative;
+      z-index:1;
+    }
+
+    @media (max-width: 520px){
+      .cell{ width: var(--cell-sm); height: var(--cell-sm); font-size:38px; }
+    }
+
+    .cell:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.22);
+    }
+    .cell:active{ transform: translateY(0px) scale(.99); }
+
+    .cell.focused{
+      box-shadow: var(--ring-blue);
+      border-color: rgba(47,123,255,.50);
+    }
+
+    .cell.x{
+      color: #eaf1ff;
+      text-shadow: 0 0 18px rgba(47,123,255,.30);
+    }
+    .cell.o{
+      color: #fff0f4;
+      text-shadow: 0 0 18px rgba(255,47,85,.28);
+    }
+
+    .cell.win{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border-color: rgba(255,255,255,.22);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.10);
+      animation: pop .22s ease;
+    }
+    .cell.win.x{ box-shadow: var(--ring-blue); }
+    .cell.win.o{ box-shadow: var(--ring-red); }
+
+    @keyframes pop{
+      from{ transform: scale(.96); }
+      to{ transform: scale(1); }
+    }
+
+    .status{
+      margin-top: 12px;
+      padding:12px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .status .msg{
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+      font-weight:900;
+      letter-spacing:.1px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius: 14px;
+      padding:10px 12px;
+      font-weight:900;
+      letter-spacing:.2px;
+      color:var(--text);
+      background: linear-gradient(180deg, rgba(47,123,255,.22), rgba(47,123,255,.14));
+      border:1px solid rgba(47,123,255,.40);
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+    }
+    button:hover{ filter:brightness(1.10); transform: translateY(-1px); }
+    button:active{ transform: translateY(0); }
+
+    button.secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      color: var(--text);
+      font-weight:900;
+    }
+    button.danger{
+      background: linear-gradient(180deg, rgba(255,47,85,.20), rgba(255,47,85,.12));
+      border:1px solid rgba(255,47,85,.42);
+    }
+
+    /* Right panel */
+    .infoGrid{
+      display:grid;
+      gap:12px;
+      padding:16px 18px 18px;
+    }
+
+    .card{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding:14px;
+    }
+
+    .card h3{
+      margin:0 0 8px;
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .card p, .card li{
+      color: var(--muted);
+      margin:0;
+      line-height:1.45;
+      font-size:13px;
+    }
+    .card ul{ margin:8px 0 0 18px; padding:0; }
+
+    .identity{
+      display:grid;
+      gap:6px;
+      font-weight:900;
+      color: var(--text);
+      line-height:1.25;
+    }
+    .identity small{
+      font-weight:900;
+      color: var(--muted);
+      letter-spacing:.1px;
+    }
+
+    /* Overlays */
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      place-items:center;
+      background: rgba(0,0,0,.60);
+      backdrop-filter: blur(10px);
+      padding:18px;
+    }
+    .overlay.show{ display:grid; }
+
+    .modal{
+      width:min(560px, 100%);
+      border-radius: 20px;
+      background:
+        radial-gradient(700px 500px at 15% 10%, rgba(47,123,255,.25), transparent 55%),
+        radial-gradient(700px 500px at 90% 20%, rgba(255,47,85,.20), transparent 55%),
+        linear-gradient(180deg, rgba(14,20,48,.94), rgba(8,10,22,.94));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+
+    .modal h2{
+      margin:0 0 8px;
+      font-size:20px;
+      letter-spacing:.2px;
+    }
+    .modal p{
+      margin:0 0 12px;
+      color: var(--muted);
+      line-height:1.5;
+      font-size:13px;
+    }
+
+    .modeRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:10px 0 12px;
+    }
+    .modeBtn{
+      flex:1;
+      min-width: 170px;
+      text-align:left;
+      padding:12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .modeBtn::after{
+      content:"";
+      position:absolute;
+      inset:-40px;
+      background: linear-gradient(90deg, rgba(47,123,255,.18), rgba(255,47,85,.14));
+      transform: rotate(-10deg);
+      opacity:0;
+      transition: opacity .15s ease;
+      pointer-events:none;
+    }
+    .modeBtn:hover{ transform: translateY(-1px); border-color: rgba(255,255,255,.22); }
+    .modeBtn:hover::after{ opacity:1; }
+    .modeBtn strong{ display:block; margin-bottom:4px; position:relative; z-index:1; }
+    .modeBtn span{ color: var(--muted); font-size:12.5px; line-height:1.35; position:relative; z-index:1; }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      padding:2px 6px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      color: #eef2ff;
+      font-size:12px;
+      white-space:nowrap;
+      font-weight:900;
+    }
+
+    .footNote{
+      margin-top:10px;
+      font-size:12px;
+      color: rgba(255,255,255,.60);
+      line-height:1.4;
+    }
+
+    .miniGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 480px){ .miniGrid{ grid-template-columns: 1fr; } }
+
+    /* tiny “signature” vibe */
+    .sig{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-weight:900;
+      color: rgba(255,255,255,.90);
+    }
+    .sigMark{
+      width:10px;height:10px;border-radius:3px;
+      background: linear-gradient(135deg, var(--blue), var(--red));
+      box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- GAME PANEL -->
+    <section class="panel" id="gamePanel" aria-label="Tic Tac Toe Game">
+      <div class="header">
+        <div class="brand">
+          <div class="title">Tic-Tac-Toe (Blue vs Red)</div>
+          <div class="subtitle">
+            Quick match vibes. Tweak Difficulty, Match Length, and Sound — then go for that 3-in-a-row.
+          </div>
+        </div>
+        <div class="badge" id="modeBadge">Mode: —</div>
+      </div>
+
+      <div class="content">
+        <div class="topRow">
+          <div class="scoreboard" aria-label="Scoreboard">
+            <div class="score">
+              <div class="label"><span class="dot"></span> X Wins</div>
+              <div class="value" id="xScore">0</div>
+            </div>
+            <div class="score">
+              <div class="label"><span class="dot o"></span> O Wins</div>
+              <div class="value" id="oScore">0</div>
+            </div>
+            <div class="score">
+              <div class="label"><span class="dot d"></span> Draws</div>
+              <div class="value" id="dScore">0</div>
+            </div>
+          </div>
+
+          <div class="matchBar" aria-label="Match progress">
+            <div class="matchBarTop">
+              <div class="left">
+                <div class="h" id="matchTitle">Match Progress</div>
+                <div class="s" id="matchSub">First to 3 wins</div>
+              </div>
+              <div class="pill" id="progressText">X 0 / 3 • O 0 / 3</div>
+            </div>
+            <div class="progressTrack" role="progressbar" aria-label="Progress bar">
+              <div class="progressFillX" id="progressX"></div>
+              <div class="progressFillO" id="progressO"></div>
+            </div>
+          </div>
+
+          <div class="settingsRow" aria-label="Settings">
+            <div class="selectWrap">
+              <div class="lbl">Difficulty (Vs Computer)</div>
+              <select id="difficultySelect" aria-label="Difficulty">
+                <option value="EASY">Easy</option>
+                <option value="NORMAL" selected>Normal</option>
+                <option value="HARD">Hard</option>
+              </select>
+            </div>
+
+            <div class="selectWrap">
+              <div class="lbl">Match Length</div>
+              <select id="matchLengthSelect" aria-label="Match length">
+                <option value="3" selected>First to 3</option>
+                <option value="5">First to 5</option>
+                <option value="7">First to 7</option>
+              </select>
+            </div>
+
+            <div class="toggle" style="grid-column:1 / -1;">
+              <div class="lbl">
+                <div class="h">Sound Effects</div>
+                <div class="s">Move / Win / Draw / UI clicks</div>
+              </div>
+              <div class="switch on" id="soundSwitch" role="switch" aria-checked="true" tabindex="0"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="boardWrap">
+          <div class="board" id="board" role="grid" aria-label="3 by 3 board"></div>
+        </div>
+
+        <div class="status" aria-label="Game status">
+          <div class="msg" id="statusMsg">Choose a mode, then press Start.</div>
+          <div class="pill" id="turnPill">Turn: —</div>
+          <div class="pill" id="hintPill">
+            Tip: <span class="kbd">R</span> reset round • <span class="kbd">N</span> new match
+          </div>
+        </div>
+
+        <div class="controls" aria-label="Controls">
+          <button id="resetRoundBtn" class="secondary" type="button">Reset Round (R)</button>
+          <button id="newMatchBtn" class="secondary" type="button">New Match (N)</button>
+          <button id="backToStartBtn" class="danger" type="button">Back to Start</button>
+        </div>
+      </div>
+
+      <!-- START SCREEN -->
+      <div class="overlay show" id="startOverlay" aria-label="Start Screen">
+        <div class="modal">
+          <h2>Start Game</h2>
+          <p>
+            Pick a mode. X goes first. Make a line of three to win the round.
+            Match ends when someone hits the chosen <b>Match Length</b>.
+          </p>
+
+          <div class="modeRow" role="group" aria-label="Game mode selection">
+            <div class="modeBtn" id="modeHuman" tabindex="0" role="button" aria-label="Two players mode">
+              <strong>Two Players</strong>
+              <span>Pass the device: X vs O. Simple, fast, no drama.</span>
+            </div>
+            <div class="modeBtn" id="modeAI" tabindex="0" role="button" aria-label="Play vs computer mode">
+              <strong>Vs Computer</strong>
+              <span>You are X. Computer is O. Difficulty is adjustable.</span>
+            </div>
+          </div>
+
+          <div class="miniGrid">
+            <div class="card" style="margin:0; padding:12px;">
+              <h3 style="margin:0 0 6px;">Quick Controls</h3>
+              <p style="margin:0; color:var(--muted); font-size:12.5px; line-height:1.45;">
+                <span class="kbd">Arrow Keys</span> move • <span class="kbd">Enter</span>/<span class="kbd">Space</span> place •
+                <span class="kbd">R</span> reset • <span class="kbd">N</span> new match
+              </p>
+            </div>
+            <div class="card" style="margin:0; padding:12px;">
+              <h3 style="margin:0 0 6px;">Tiny Note</h3>
+              <p style="margin:0; color:var(--muted); font-size:12.5px; line-height:1.45;">
+                If sound is quiet at first, click/tap once (browser policy), then you’re good.
+              </p>
+            </div>
+          </div>
+
+          <button id="startBtn" type="button" style="width:100%; padding:12px 14px; margin-top:12px;">Start</button>
+
+          <div class="footNote">
+            You can also play fully with keyboard. (Arrow keys + Enter/Space)
+          </div>
+        </div>
+      </div>
+
+      <!-- END SCREEN -->
+      <div class="overlay" id="endOverlay" aria-label="End Screen">
+        <div class="modal">
+          <h2 id="endTitle">Match Over</h2>
+          <p id="endSummary">—</p>
+          <div class="controls" style="margin-top:10px;">
+            <button id="playAgainBtn" type="button">Play Again (New Match)</button>
+            <button id="toStartBtn" class="secondary" type="button">Go to Start</button>
+          </div>
+          <div class="footNote">
+            Tip: switch difficulty or match length, then start a new match.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INFO PANEL -->
+    <aside class="panel" aria-label="Instructions and Created By">
+      <div class="header">
+        <div class="brand">
+          <div class="title">Instructions</div>
+          <div class="subtitle">Everything you need is inside the game.</div>
+        </div>
+        <div class="badge"><span class="sig"><span class="sigMark"></span> Blue + Red</span></div>
+      </div>
+
+      <div class="infoGrid">
+        <div class="card">
+          <h3>How to Play</h3>
+          <ul>
+            <li>Click/tap an empty cell to place your mark.</li>
+            <li>Win the round by getting <b>3 in a row</b>.</li>
+            <li>The match ends when someone reaches the selected <b>Match Length</b> (First to 3/5/7).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Difficulty (Vs Computer)</h3>
+          <ul>
+            <li><b>Easy:</b> mostly random moves.</li>
+            <li><b>Normal:</b> mixes smart + random (beat it with good reads).</li>
+            <li><b>Hard:</b> plays optimal (expect pain 😅).</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Keyboard Controls</h3>
+          <ul>
+            <li><span class="kbd">Arrow Keys</span> move selection</li>
+            <li><span class="kbd">Enter</span> / <span class="kbd">Space</span> place mark</li>
+            <li><span class="kbd">R</span> reset current round</li>
+            <li><span class="kbd">N</span> start a new match (scores reset)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Created by</h3>
+          <div class="identity">
+            <div>Name: <span style="color:#fff;">CAJURAO, JHON LOYD A.</span></div>
+            <div>Student No: <span style="color:#fff;">CA202502925</span></div>
+            <div>1ST YEAR BSIT-B - <span style="color:#fff;">OLCA122E034</span></div>
+            <small>AY: 2025-2026</small>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Feedback System</h3>
+          <p>
+            You’ll see turn prompts, win/draw messages, winning cell highlights,
+            score tracking (X/O/draws), plus a match progress bar.
+          </p>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // ---------- DOM ----------
+    const boardEl = document.getElementById("board");
+    const xScoreEl = document.getElementById("xScore");
+    const oScoreEl = document.getElementById("oScore");
+    const dScoreEl = document.getElementById("dScore");
+    const statusMsgEl = document.getElementById("statusMsg");
+    const turnPillEl = document.getElementById("turnPill");
+    const modeBadgeEl = document.getElementById("modeBadge");
+
+    const startOverlay = document.getElementById("startOverlay");
+    const endOverlay = document.getElementById("endOverlay");
+    const endTitle = document.getElementById("endTitle");
+    const endSummary = document.getElementById("endSummary");
+
+    const modeHumanBtn = document.getElementById("modeHuman");
+    const modeAIBtn = document.getElementById("modeAI");
+    const startBtn = document.getElementById("startBtn");
+
+    const resetRoundBtn = document.getElementById("resetRoundBtn");
+    const newMatchBtn = document.getElementById("newMatchBtn");
+    const backToStartBtn = document.getElementById("backToStartBtn");
+
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const toStartBtn = document.getElementById("toStartBtn");
+
+    const difficultySelect = document.getElementById("difficultySelect");
+    const matchLengthSelect = document.getElementById("matchLengthSelect");
+
+    const soundSwitch = document.getElementById("soundSwitch");
+
+    const matchTitle = document.getElementById("matchTitle");
+    const matchSub = document.getElementById("matchSub");
+    const progressText = document.getElementById("progressText");
+    const progressXEl = document.getElementById("progressX");
+    const progressOEl = document.getElementById("progressO");
+
+    // ---------- AUDIO (WebAudio, no external files) ----------
+    let audioCtx = null;
+    let soundOn = true;
+
+    function ensureAudio(){
+      if(!soundOn) return null;
+      if(!audioCtx){
+        try{
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }catch(_){
+          audioCtx = null;
+        }
+      }
+      if(audioCtx && audioCtx.state === "suspended"){
+        audioCtx.resume().catch(()=>{});
+      }
+      return audioCtx;
+    }
+
+    function beep(freq, durMs, type="sine", vol=0.06){
+      const ctx = ensureAudio();
+      if(!ctx) return;
+      const t0 = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + durMs/1000);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(t0);
+      osc.stop(t0 + durMs/1000 + 0.02);
+    }
+
+    const SFX = {
+      click(){ beep(380, 60, "triangle", 0.05); },
+      moveX(){ beep(540, 90, "sine", 0.06); },
+      moveO(){ beep(320, 90, "sine", 0.06); },
+      win(){ beep(660, 90, "square", 0.05); setTimeout(()=>beep(880, 120, "square", 0.05), 90); },
+      draw(){ beep(240, 120, "sawtooth", 0.045); setTimeout(()=>beep(200, 140, "sawtooth", 0.045), 120); },
+      error(){ beep(160, 120, "square", 0.04); },
+      open(){ beep(420, 60, "triangle", 0.05); setTimeout(()=>beep(520, 70, "triangle", 0.05), 55); }
+    };
+
+    window.addEventListener("pointerdown", ()=>{ ensureAudio(); }, { once:false });
+
+    // ---------- GAME STATE ----------
+    const WIN_LINES = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    let mode = null;             // "HUMAN" | "AI"
+    let difficulty = "NORMAL";   // EASY | NORMAL | HARD (only for AI mode)
+    let matchPoint = 3;
+
+    let board = Array(9).fill(null);
+    let turn = "X";
+    let roundOver = false;
+
+    let scores = { X:0, O:0, D:0 };
+    let focusIndex = 0;
+
+    // ---------- UI HELPERS ----------
+    function setStatus(msg){ statusMsgEl.textContent = msg; }
+    function setTurnPill(){ turnPillEl.textContent = roundOver ? "Turn: —" : `Turn: ${turn}`; }
+
+    function setModeBadge(){
+      if(!mode) modeBadgeEl.textContent = "Mode: —";
+      else modeBadgeEl.textContent = mode === "AI" ? "Mode: Vs Computer" : "Mode: Two Players";
+    }
+
+    function updateScores(){
+      xScoreEl.textContent = String(scores.X);
+      oScoreEl.textContent = String(scores.O);
+      dScoreEl.textContent = String(scores.D);
+      updateProgressBar();
+    }
+
+    function updateProgressBar(){
+      matchTitle.textContent = "Match Progress";
+      matchSub.textContent = `First to ${matchPoint} wins`;
+      progressText.textContent = `X ${scores.X} / ${matchPoint} • O ${scores.O} / ${matchPoint}`;
+
+      const xPct = Math.min(100, (scores.X / matchPoint) * 100);
+      const oPct = Math.min(100, (scores.O / matchPoint) * 100);
+      progressXEl.style.width = xPct + "%";
+      progressOEl.style.width = oPct + "%";
+    }
+
+    function clearWinHighlights(){
+      [...boardEl.children].forEach(c => c.classList.remove("win","x","o"));
+      // re-render will restore mark classes
+    }
+
+    function renderBoard(){
+      boardEl.innerHTML = "";
+      for(let i=0;i<9;i++){
+        const btn = document.createElement("button");
+        btn.className = "cell";
+        btn.type = "button";
+        btn.setAttribute("role","gridcell");
+        btn.setAttribute("aria-label", `Cell ${i+1}`);
+        btn.dataset.index = String(i);
+
+        const v = board[i];
+        if(v === "X"){
+          btn.textContent = "X";
+          btn.classList.add("x");
+        }else if(v === "O"){
+          btn.textContent = "O";
+          btn.classList.add("o");
+        }else{
+          btn.textContent = "";
+        }
+
+        btn.addEventListener("click", () => handleMove(i));
+        if(i === focusIndex) btn.classList.add("focused");
+        boardEl.appendChild(btn);
+      }
+    }
+
+    function setFocus(index){
+      focusIndex = ((index % 9) + 9) % 9;
+      renderBoard();
+    }
+
+    // ---------- GAME LOGIC ----------
+    function readSettings(){
+      difficulty = difficultySelect.value;
+      matchPoint = parseInt(matchLengthSelect.value, 10) || 3;
+      updateProgressBar();
+    }
+
+    function resetRound(silent=false){
+      board = Array(9).fill(null);
+      turn = "X";
+      roundOver = false;
+      setStatus("Fresh round. X starts — good luck.");
+      setTurnPill();
+      setFocus(0);
+      renderBoard();
+      if(!silent) SFX.click();
+    }
+
+    function newMatch(silent=false){
+      readSettings();
+      scores = { X:0, O:0, D:0 };
+      updateScores();
+      resetRound(true);
+      endOverlay.classList.remove("show");
+      setStatus(`New match — first to ${matchPoint}.`);
+      if(!silent) SFX.open();
+    }
+
+    function startGame(){
+      readSettings();
+      if(!mode) {
+        setStatus("Pick a mode first (Two Players or Vs Computer).");
+        SFX.error();
+        return;
+      }
+      setModeBadge();
+      startOverlay.classList.remove("show");
+      endOverlay.classList.remove("show");
+      newMatch(true);
+      setStatus(`Alright. First to ${matchPoint} wins. X goes first.`);
+      SFX.open();
+    }
+
+    function availableMoves(b){
+      const moves = [];
+      for(let i=0;i<9;i++) if(!b[i]) moves.push(i);
+      return moves;
+    }
+
+    function winnerOf(b){
+      for(const line of WIN_LINES){
+        const [a,c,d] = line;
+        if(b[a] && b[a] === b[c] && b[a] === b[d]){
+          return { winner: b[a], line };
+        }
+      }
+      if(b.every(Boolean)) return { winner: "D", line: null };
+      return null;
+    }
+
+    function highlightLine(line, who){
+      if(!line) return;
+      line.forEach(i=>{
+        const cell = boardEl.querySelector(`.cell[data-index="${i}"]`);
+        if(cell){
+          cell.classList.add("win");
+          if(who === "X") cell.classList.add("x");
+          if(who === "O") cell.classList.add("o");
+        }
+      });
+    }
+
+    function openEndScreen(){
+      const matchWinner = scores.X >= matchPoint ? "X" : "O";
+      endTitle.textContent = "Match Over";
+      endSummary.textContent =
+        (mode === "AI" && matchWinner === "O")
+          ? `Computer takes it. Final: X ${scores.X} • O ${scores.O} • Draws ${scores.D}`
+          : `${matchWinner} wins the match. Final: X ${scores.X} • O ${scores.O} • Draws ${scores.D}`;
+
+      endOverlay.classList.add("show");
+      SFX.win();
+    }
+
+    function endRound(result){
+      roundOver = true;
+      setTurnPill();
+
+      if(result.winner === "X"){
+        scores.X++;
+        setStatus("X wins the round!");
+        SFX.win();
+      }else if(result.winner === "O"){
+        scores.O++;
+        setStatus(mode === "AI" ? "Computer wins the round!" : "O wins the round!");
+        SFX.win();
+      }else{
+        scores.D++;
+        setStatus("Draw round — run it back.");
+        SFX.draw();
+      }
+
+      updateScores();
+      highlightLine(result.line, result.winner);
+
+      if(scores.X >= matchPoint || scores.O >= matchPoint){
+        setTimeout(openEndScreen, 450);
+      }else{
+        setTimeout(() => {
+          resetRound(true);
+        }, 900);
+      }
+    }
+
+    // ---------- AI ----------
+    function minimax(b, currentPlayer, aiPlayer){
+      const res = winnerOf(b);
+      if(res){
+        if(res.winner === aiPlayer) return { score: 10 };
+        if(res.winner === "D") return { score: 0 };
+        return { score: -10 };
+      }
+
+      const moves = availableMoves(b);
+      const outcomes = [];
+
+      for(const m of moves){
+        const next = b.slice();
+        next[m] = currentPlayer;
+        const nextPlayer = (currentPlayer === "X") ? "O" : "X";
+        const out = minimax(next, nextPlayer, aiPlayer);
+        outcomes.push({ move: m, score: out.score });
+      }
+
+      const isAI = currentPlayer === aiPlayer;
+      let best = outcomes[0];
+
+      for(const o of outcomes){
+        if(isAI){
+          if(o.score > best.score) best = o;
+        }else{
+          if(o.score < best.score) best = o;
+        }
+      }
+      return best;
+    }
+
+    function randomMove(){
+      const moves = availableMoves(board);
+      if(moves.length === 0) return null;
+      return moves[Math.floor(Math.random() * moves.length)];
+    }
+
+    function immediateWinOrBlock(player){
+      for(const m of availableMoves(board)){
+        const b2 = board.slice();
+        b2[m] = player;
+        const res = winnerOf(b2);
+        if(res && res.winner === player) return m;
+      }
+      return null;
+    }
+
+    function aiChooseMove(){
+      if(difficulty === "EASY"){
+        if(Math.random() < 0.15){
+          const win = immediateWinOrBlock("O");
+          if(win !== null) return win;
+          const block = immediateWinOrBlock("X");
+          if(block !== null) return block;
+        }
+        return randomMove();
+      }
+
+      if(difficulty === "NORMAL"){
+        const win = immediateWinOrBlock("O");
+        if(win !== null) return win;
+
+        const block = immediateWinOrBlock("X");
+        if(block !== null) return block;
+
+        if(Math.random() < 0.60){
+          if(!board[4]) return 4;
+          const corners = [0,2,6,8].filter(i => !board[i]);
+          if(corners.length) return corners[Math.floor(Math.random()*corners.length)];
+          const edges = [1,3,5,7].filter(i => !board[i]);
+          if(edges.length) return edges[Math.floor(Math.random()*edges.length)];
+        }
+        return randomMove();
+      }
+
+      const best = minimax(board.slice(), "O", "O");
+      if(best && typeof best.move === "number") return best.move;
+      return randomMove();
+    }
+
+    function aiMove(){
+      if(roundOver) return;
+      if(mode !== "AI") return;
+      if(turn !== "O") return;
+
+      setStatus("Computer is thinking...");
+      setTurnPill();
+
+      setTimeout(() => {
+        const move = aiChooseMove();
+        if(typeof move === "number"){
+          handleMove(move, true);
+        }
+      }, 260);
+    }
+
+    function handleMove(index, fromAI=false){
+      if(startOverlay.classList.contains("show")) return;
+      if(endOverlay.classList.contains("show")) return;
+
+      if(roundOver) return;
+      if(board[index]){ SFX.error(); return; }
+
+      if(mode === "AI" && !fromAI && turn === "O"){ SFX.error(); return; }
+
+      board[index] = turn;
+      setFocus(index);
+      renderBoard();
+
+      if(turn === "X") SFX.moveX(); else SFX.moveO();
+
+      const res = winnerOf(board);
+      if(res){
+        endRound(res);
+        return;
+      }
+
+      turn = (turn === "X") ? "O" : "X";
+      setTurnPill();
+      setStatus(`${turn}'s turn. Your move.`);
+      aiMove();
+    }
+
+    // ---------- MODE SELECT ----------
+    function selectMode(newMode){
+      mode = newMode;
+      setModeBadge();
+
+      modeHumanBtn.style.borderColor = (mode === "HUMAN") ? "rgba(47,123,255,.55)" : "rgba(255,255,255,.12)";
+      modeAIBtn.style.borderColor = (mode === "AI") ? "rgba(255,47,85,.50)" : "rgba(255,255,255,.12)";
+      modeHumanBtn.style.background = (mode === "HUMAN") ? "rgba(47,123,255,.12)" : "rgba(255,255,255,.06)";
+      modeAIBtn.style.background = (mode === "AI") ? "rgba(255,47,85,.10)" : "rgba(255,255,255,.06)";
+      SFX.click();
+    }
+
+    modeHumanBtn.addEventListener("click", ()=> selectMode("HUMAN"));
+    modeAIBtn.addEventListener("click", ()=> selectMode("AI"));
+    modeHumanBtn.addEventListener("keydown", (e)=> {
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); selectMode("HUMAN"); }
+    });
+    modeAIBtn.addEventListener("keydown", (e)=> {
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); selectMode("AI"); }
+    });
+
+    startBtn.addEventListener("click", startGame);
+
+    // ---------- SETTINGS ----------
+    difficultySelect.addEventListener("change", ()=>{
+      readSettings();
+      SFX.click();
+      if(mode === "AI") setStatus(`Difficulty: ${difficulty}. Continue or press N for a clean restart.`);
+    });
+
+    matchLengthSelect.addEventListener("change", ()=>{
+      readSettings();
+      SFX.click();
+      setStatus(`Match length: First to ${matchPoint}. Press N to restart with new rules.`);
+    });
+
+    function setSoundUI(){
+      soundSwitch.classList.toggle("on", soundOn);
+      soundSwitch.setAttribute("aria-checked", soundOn ? "true" : "false");
+    }
+
+    soundSwitch.addEventListener("click", ()=>{
+      soundOn = !soundOn;
+      setSoundUI();
+      if(soundOn) SFX.open();
+    });
+    soundSwitch.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        soundOn = !soundOn;
+        setSoundUI();
+        if(soundOn) SFX.open();
+      }
+    });
+
+    // ---------- BUTTONS ----------
+    resetRoundBtn.addEventListener("click", ()=> resetRound(false));
+    newMatchBtn.addEventListener("click", ()=> newMatch(false));
+    backToStartBtn.addEventListener("click", ()=>{
+      startOverlay.classList.add("show");
+      endOverlay.classList.remove("show");
+      setStatus("Choose a mode, then press Start.");
+      mode = null;
+      // visual reset
+      modeHumanBtn.style.borderColor = "rgba(255,255,255,.12)";
+      modeAIBtn.style.borderColor = "rgba(255,255,255,.12)";
+      modeHumanBtn.style.background = "rgba(255,255,255,.06)";
+      modeAIBtn.style.background = "rgba(255,255,255,.06)";
+      setModeBadge();
+      SFX.open();
+    });
+
+    playAgainBtn.addEventListener("click", ()=>{
+      endOverlay.classList.remove("show");
+      newMatch(false);
+    });
+    toStartBtn.addEventListener("click", ()=>{
+      endOverlay.classList.remove("show");
+      startOverlay.classList.add("show");
+      setStatus("Choose a mode, then press Start.");
+      SFX.open();
+    });
+
+    // ---------- KEYBOARD ----------
+    window.addEventListener("keydown", (e)=>{
+      if(e.key.toLowerCase() === "r"){
+        e.preventDefault();
+        resetRound(false);
+        return;
+      }
+      if(e.key.toLowerCase() === "n"){
+        e.preventDefault();
+        newMatch(false);
+        return;
+      }
+
+      if(startOverlay.classList.contains("show")) return;
+
+      if(endOverlay.classList.contains("show")){
+        if(e.key === "Escape"){
+          endOverlay.classList.remove("show");
+          SFX.click();
+        }
+        return;
+      }
+
+      const row = Math.floor(focusIndex / 3);
+      const col = focusIndex % 3;
+
+      if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){
+        e.preventDefault();
+        let r=row, c=col;
+        if(e.key === "ArrowUp") r = (row + 2) % 3;
+        if(e.key === "ArrowDown") r = (row + 1) % 3;
+        if(e.key === "ArrowLeft") c = (col + 2) % 3;
+        if(e.key === "ArrowRight") c = (col + 1) % 3;
+        setFocus(r*3 + c);
+        SFX.click();
+        return;
+      }
+
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        handleMove(focusIndex);
+        return;
+      }
+    });
+
+    // ---------- INIT ----------
+    function init(){
+      setSoundUI();
+      readSettings();
+      updateScores();
+      setModeBadge();
+      setStatus("Choose a mode, then press Start.");
+      setTurnPill();
+      renderBoard();
+    }
+    init();
+  </script>
+</body>
+</html>
